@@ -42,7 +42,16 @@ class Record:
         self.phones = []
 
     def __str__(self):
-        return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)}"
+        parts = []
+
+        parts.append(f"Name: {str(self.name)}")
+
+        if self.birthday:
+            parts.append(f"birthday: {str(self.birthday)}")
+
+        parts.append(f"phones: {'; '.join(str(p) for p in self.phones)}")
+
+        return ', '.join(parts)
 
     def add_birthday(self, birthday):
         self.birthday = Birthday(birthday)

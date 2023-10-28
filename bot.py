@@ -106,7 +106,7 @@ def show_all(book: AddressBook):
     rows = []
 
     for name, record in book.data.items():
-        rows.append(f"{name}: {record.phones[0]} ({record.birthday.value})")
+        rows.append(str(record))
 
     return '\n'.join(rows)
 
@@ -141,7 +141,7 @@ def show_birthday(args, book: AddressBook):
     if not record:
         raise ContactAbsentError
 
-    return record.birthday.value if record.birthday else 'Birthday not set'
+    return str(record.birthday) if record.birthday else 'Birthday not set'
 
 
 @input_error
@@ -151,8 +151,7 @@ def birthdays(book: AddressBook):
         rows.append(day)
 
         for record in records:
-            rows.append(
-                f"{record.name}: {record.phones[0]} ({record.birthday.value})")
+            rows.append(str(record))
 
         rows.append('')
 
