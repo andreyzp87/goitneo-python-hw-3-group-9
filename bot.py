@@ -21,6 +21,9 @@ class ContactListEmptyError(Exception):
     pass
 
 
+DEFAULT_BACKUP_FILENAME = 'book.bak'
+
+
 def parse_input(user_input):
     cmd, *args = user_input.split()
     cmd = cmd.strip().lower()
@@ -163,7 +166,7 @@ def birthdays(book: AddressBook):
 
 @input_error
 def backup_book(args, book):
-    filename = 'book.bak' if not args else args[0]
+    filename = DEFAULT_BACKUP_FILENAME if not args else args[0]
     with open(filename, 'wb') as f:
         pickle.dump(book, f)
     return f"Saved to {filename}"
@@ -171,17 +174,22 @@ def backup_book(args, book):
 
 @input_error
 def restore_book(args):
-    filename = 'book.bak' if not args else args[0]
+    filename = DEFAULT_BACKUP_FILENAME if not args else args[0]
     with open(filename, 'rb') as f:
-        restored_book = pickle.load(f)
-    return restored_book, f"Restored from {filename}"
+        book = pickle.load(f)
+    return book, f"Restored from {filename}"
 
 
 def main():
-    book = AddressBook()
-
     if (len(sys.argv) > 1 and sys.argv[1] == 'demo'):
-        book = fill_demo_data(book)
+        book = fill_demo_data()
+    else:
+        restored_result = restore_book(tuple())
+
+        if isinstance(restored_result, str) or not isinstance(restored_result[0], AddressBook):
+            book = AddressBook()
+        else:
+            book = restored_result[0]
 
     print("Welcome to the assistant bot!")
 
@@ -195,6 +203,7 @@ def main():
         command, *args = parse_input(user_input)
 
         if command in ["close", "exit"]:
+            print(backup_book(tuple(), book))
             print("Good bye!")
             break
         elif command == "hello":
@@ -218,16 +227,21 @@ def main():
         elif command == "restore":
             result = restore_book(args)
 
-            if result is str:
+            if isinstance(restored_result, str) or not isinstance(restored_result[0], AddressBook):
                 print(result)
             else:
                 book = result[0]
                 print(result[1])
+        elif command == "clear":
+            book = AddressBook()
+            print('Address book was cleared.')
         else:
             print("Invalid command.")
 
 
-def fill_demo_data(book):
+def fill_demo_data():
+    book = AddressBook()
+
     contacts = [
         ('Alex', '1234567890'),
         ('Andy', '0987654321'),
@@ -271,7 +285,7 @@ def fill_demo_data(book):
     print(restore_book(('random.bak',)))
 
     print('Backing up book before any changes:')
-    print(backup_book(tuple(), book))
+    print(backup_book(('demo.bak', ), book))
 
     name = contacts[0][0]
     phone = '9999999999'
@@ -285,7 +299,7 @@ def fill_demo_data(book):
     print(delimiter)
 
     print('Restore book and show all:')
-    book, message = restore_book(tuple())
+    book, message = restore_book(('demo.bak', ))
     print(message)
     print(show_all(book))
     print(delimiter)
