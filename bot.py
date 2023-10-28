@@ -2,6 +2,7 @@ from address_book import AddressBook, Record
 from datetime import datetime, timedelta
 import random
 import sys
+import pickle
 
 
 class TooManyArgsError(Exception):
@@ -42,6 +43,8 @@ def input_error(func):
             return "Contact is already present, use \"change\" command to overwrite the phone."
         except ContactListEmptyError:
             return "Contacts list is empty."
+        except FileNotFoundError:
+            return "Backup file was not found."
 
     return inner
 
@@ -158,11 +161,27 @@ def birthdays(book: AddressBook):
     return '\n'.join(rows)
 
 
+@input_error
+def backup_book(args, book):
+    filename = 'book.bak' if not args else args[0]
+    with open(filename, 'wb') as f:
+        pickle.dump(book, f)
+    return f"Saved to {filename}"
+
+
+@input_error
+def restore_book(args):
+    filename = 'book.bak' if not args else args[0]
+    with open(filename, 'rb') as f:
+        restored_book = pickle.load(f)
+    return restored_book, f"Restored from {filename}"
+
+
 def main():
     book = AddressBook()
 
     if (len(sys.argv) > 1 and sys.argv[1] == 'demo'):
-        fill_demo_data(book)
+        book = fill_demo_data(book)
 
     print("Welcome to the assistant bot!")
 
@@ -194,6 +213,16 @@ def main():
             print(show_birthday(args, book))
         elif command == "birthdays":
             print(birthdays(book))
+        elif command == "backup":
+            print(backup_book(args, book))
+        elif command == "restore":
+            result = restore_book(args)
+
+            if result is str:
+                print(result)
+            else:
+                book = result[0]
+                print(result[1])
         else:
             print("Invalid command.")
 
@@ -228,6 +257,22 @@ def fill_demo_data(book):
     print(show_all(book))
     print(delimiter)
 
+    print('Supplying wrong data:')
+    print(add_contact(tuple(), book))
+    print(add_contact(('AAA',), book))
+    print(add_contact(('AAA', phone, birthday), book))
+    print(change_contact(('AAA',), book))
+    print(change_contact((name,), book))
+    print(change_contact((name, 'wrong phone'), book))
+    print(add_birthday((name, 'wrong birthday'), book))
+    print(delimiter)
+
+    print('Restoring from missing file:')
+    print(restore_book(('random.bak',)))
+
+    print('Backing up book before any changes:')
+    print(backup_book(tuple(), book))
+
     name = contacts[0][0]
     phone = '9999999999'
     birthday = '01.11.2001'
@@ -239,15 +284,13 @@ def fill_demo_data(book):
     print(show_all(book))
     print(delimiter)
 
-    print('Supplying wrong data:')
-    print(add_contact(tuple(), book))
-    print(add_contact(('AAA',), book))
-    print(add_contact(('AAA', phone, birthday), book))
-    print(change_contact(('AAA',), book))
-    print(change_contact((name,), book))
-    print(change_contact((name, 'wrong phone'), book))
-    print(add_birthday((name, 'wrong birthday'), book))
+    print('Restore book and show all:')
+    book, message = restore_book(tuple())
+    print(message)
+    print(show_all(book))
     print(delimiter)
+
+    return book
 
 
 if __name__ == "__main__":

@@ -126,12 +126,16 @@ if __name__ == "__main__":
     john_record = Record("John")
     john_record.add_phone("1234567890")
     john_record.add_phone("5555555555")
-    john_record.add_birthday("30.10.1987")
+    john_record.add_birthday("02.11.1987")
 
     # Додавання запису John до адресної книги
     book.add_record(john_record)
 
-    print(book.birthdays())
+    for weekday, records in book.birthdays():
+        print(weekday)
+
+        for record in records:
+            print(record)
 
     # Створення та додавання нового запису для Jane
     jane_record = Record("Jane")
